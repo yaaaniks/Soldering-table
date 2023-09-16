@@ -3,6 +3,7 @@
 
 #include "stm32g031xx.h"
 #include "constants.h"
+#include "fsm.h"
 
 /**
  * @brief 

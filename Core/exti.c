@@ -3,6 +3,20 @@
 
 void EXTI_Init(void) {
     /********** PA7 set for EXTI ************/
+    GPIOA->MODER &= ~(GPIO_MODER_MODE6_0 | GPIO_MODER_MODE6_1); 
+
+    GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEED6_0;
+    GPIOA->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED6_1;
+    
+    GPIOA->PUPDR |= GPIO_PUPDR_PUPD6_0;
+    GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD6_1;
+    
+    EXTI->EXTICR[1] &= ~EXTI_EXTICR2_EXTI6;     // clear EXTI for PA7 - 7(EXTI7)
+    // EXTI->EXTICR[1] |= EXTI_EXTICR2_EXTI7_0;   // set EXTI for PA7 - 7(EXTI7)
+    EXTI->FTSR1 |= EXTI_FTSR1_FT6;              // set EXTI Rising triger for Line no.7
+    EXTI->IMR1 |= EXTI_IMR1_IM6;                // set EXTI Interrupt no-masked for Line no.7 
+
+    /********** PA7 set for EXTI ************/
     GPIOA->MODER &= ~(GPIO_MODER_MODE7_0 | GPIO_MODER_MODE7_1); 
 
     GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEED7_0;
@@ -41,5 +55,8 @@ void __attribute__((interrupt, used)) EXTI4_15_IRQHandler(void) {
     } else if (EXTI->FPR1 & EXTI_FPR1_FPIF7) {      // interrupt pending from Line no.9 (Falling) ?
         EXTI->FPR1 |= EXTI_FPR1_FPIF7;              // clear pending
         userTemperature--;
+    } else if (EXTI->FPR1 & EXTI_FPR1_FPIF6) {
+        EXTI->FPR1 |= EXTI_FPR1_FPIF7;
+        fifoPush(&fsm, EV_USER);
     }
 }

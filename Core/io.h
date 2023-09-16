@@ -15,4 +15,9 @@
 typedef __IO uint32_t  vu32;
 typedef uint32_t  u32;
 
+void ITM_SendChar(uint8_t ch);
+/* Override low-level _write system call */
+int _write(int file, char *ptr, int len);
+void GPIO_Init(void);
+
 #endif // IO_H

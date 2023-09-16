@@ -8,12 +8,11 @@
 #define SCB_AIRCR_GROUP22	0x05FA0500                                  // change priority data
 
 #define ADC_BUFFER_SIZE     64
-#define ST_NUM				3
-#define EV_NUM				2
-#define ST_H_NUM            2
+#define ST_NUM				5
+#define EV_NUM				3
 #define MAX_RAW_VALUE       1638
 
 extern uint16_t userTemperature;
-extern float currentTemperature;
+extern uint16_t currentTemperature;
 
 #endif // CONSTANTS_H

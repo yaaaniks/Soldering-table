@@ -29,12 +29,16 @@ enum ReturnCode {
 
 enum Event {
 	EV_NONE = 0,
-	EV_ADC
+	EV_ADC, 
+	EV_USER,
 };
 
 enum State {
 	ST_STARTUP = 0,
-	ST_UPDATESCREEN
+	ST_USER,
+	ST_UPDATESCREEN,
+	ST_REGULATOR,
+	ST_NONE
 };
 
 typedef enum Event Event_t;
@@ -58,7 +62,7 @@ typedef struct {
 	State_t curState;
 	uint32_t timeOut;
 	Fsm_Cell_t fsmTransitionTable[ST_NUM];
-	void (*stateHandler[ST_H_NUM])();
+	void (*stateHandler[ST_NUM])();
 } Fsm;
 
 extern size_t numCells;

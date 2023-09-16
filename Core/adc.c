@@ -67,7 +67,7 @@ void ADC1_Init(void) {
     ADC->CCR &= ~ADC_CCR_PRESC;
     ADC->CCR |= ADC_CCR_PRESC_2; /* divide by 0100=8 */
 
-    ADC->CCR |= ADC_CCR_VREFEN;
+    // ADC->CCR |= ADC_CCR_VREFEN;
     ADC->CCR |= ADC_CCR_TSEN;   
     // ADC->CCR |= ADC_CCR_VBATEN; 
 
@@ -105,7 +105,7 @@ void ADC1_Init(void) {
     ADC1->CFGR1 |= ADC_CFGR1_AUTOFF;
     ADC1->CFGR1 |= ADC_CFGR1_SCANDIR;  
     ADC1->CFGR1 |= ADC_CFGR1_EXTSEL_2; 
-    ADC1->CHSELR = ADC_CHSELR_CHSEL0;
+    ADC1->CHSELR = ADC_CHSELR_CHSEL5;
     while ((ADC1->ISR & ADC_ISR_CCRDY) == 0) {}
 
     ADC1->CFGR1 |= ADC_CFGR1_DMACFG; 
@@ -147,7 +147,7 @@ void ADC1_Start(void) {
     ADC1->CR |= ADC_CR_ADSTART;      
     NVIC_EnableIRQ(ADC1_IRQn); 
     NVIC_EnableIRQ(DMA1_Channel1_IRQn);
-    NVIC_SetPriority(DMA1_Channel1_IRQn, 2);
+    NVIC_SetPriority(DMA1_Channel1_IRQn, 0);
 }
 
 void __attribute__((interrupt, used)) ADC1_IRQHandler(void) {

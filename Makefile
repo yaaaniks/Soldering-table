@@ -1,196 +1,225 @@
-PROJECT=DIYtable
+#########################################################################################################################################
+# Basic Makefile 
+# 	- It uses GCC's autodependency feature to maintain a list of dependencies for each source file in the build directory -- this means
+# 		it will recompile only the files that need to be recompiled, automatically.
+# 	- The majority of the makefile is a defined variable that is evaluated with a set of parameters that can either be set at the bottom
+# 		of this file or passed in via the command line. Evaluation happens at the end of the file, with defaults defined just before.
+#########################################################################################################################################
 
-# FIXME: debugging is not allow correctly
-MCU=STM32G031xx
+# Use Bash sdf
+SHELL = /bin/sh
+PROJECT = main
+# Functions
+find_includes_in_dir = $(shell find $(1) -name "*.h" | sed 's|/[^/]*$$||' | sort -u)
 
-INCLUDE_DIR=./inc
-SOURCE_DIR=./src
-COMMON_DIR=./common
-CORE_DIR=./Core
-CMSIS_DIR=./cmsis
-CPU_DIR=./cpu
-BUILD_DIR=build
+# ---------------------------------------------------------------------
+# Toolchain Configuration
+# ---------------------------------------------------------------------
+BINUTILS_ROOT           ?= /usr/
+TOOLCHAIN               := arm-none-eabi
+CC                      := $(BINUTILS_ROOT)/bin/$(TOOLCHAIN)-gcc
+CXX                     := $(BINUTILS_ROOT)/bin/$(TOOLCHAIN)-g++
+AS                      := $(BINUTILS_ROOT)/bin/$(TOOLCHAIN)-as
+OBJCOPY					:= $(BINUTILS_ROOT)/bin/$(TOOLCHAIN)-objcopy
+OBJDUMP 				:= $(BINUTILS_ROOT)/bin/$(TOOLCHAIN)-objdump
+SIZE 					:= $(BINUTILS_ROOT)/bin/$(TOOLCHAIN)-size
+C_STANDARD				:= -std=gnu11
+CXX_STANDARD 			:= -std=gnu++11
 
-# DEF=-DSTM32F401xC
-OPT = -Og
-# OPT=-O3 -g0 -flto
-SRC=$(SOURCE_DIR)/main.c 
-SRC+=$(SOURCE_DIR)/system_stm32g0xx.c
-SRC+=$(COMMON_DIR)/fsm.c 
-SRC+=$(CORE_DIR)/timer.c
-SRC+=$(CORE_DIR)/i2c.c
-SRC+=$(CORE_DIR)/adc.c
-SRC+=$(CORE_DIR)/exti.c
-SRC+=$(CORE_DIR)/rcc.c
-SRC+=$(CORE_DIR)/io.c
-SRC+=$(COMMON_DIR)/ssd1306.c
-SRC+=$(COMMON_DIR)/ssd1306_fonts.c
-SRC+=$(COMMON_DIR)/ssd1306_tests.c
-SRC+=$(COMMON_DIR)/tempControl.c
+# -----------------------------------------------------------------------------------------------------------------
+# Defined Symbols
+# -----------------------------------------------------------------------------------------------------------------
+DEFS 					:= -DSTM32G031xx -DARM_MATH_CM0PLUS -D__FPU_PRESENT=1U -DHSI_VALUE=16000000
 
-# list of objects
-OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o)))
-vpath %.c $(sort $(dir $(C_SOURCES)))
+# ---------------------------------------------------------------------------------------------------------------------------------------
+# Compiler & Linker Flags
+# ---------------------------------------------------------------------------------------------------------------------------------------
+# Flags sent to all tools in the Toolchain 
+TOOLCHAIN_SETTINGS 		:= -mcpu=cortex-m0plus -mthumb -mfloat-abi=soft #-mfpu=fpv4-sp-d16 #cortex-m0plus.small-multiply
+TOOLCHAIN_SETTINGS 		+= -fmessage-length=0 -ffunction-sections -fdata-sections
 
-# list of ASM program objects
-OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(ASM_SOURCES:.s=.o)))
-vpath %.s $(sort $(dir $(ASM_SOURCES)))
+# C Compiler -- Warnings 
+CFLAGS 					+= $(TOOLCHAIN_SETTINGS) $(DEFS) $(addprefix -I, $(INC_DIRS))
+CFLAGS                  += -Wall
+CFLAGS 					+= -Wextra
+CFLAGS 					+= -Wfatal-errors
+CFLAGS 					+= -Wpacked
+CFLAGS 					+= -Winline
+CFLAGS 					+= -Wfloat-equal
+CFLAGS 					+= -Wconversion
+CFLAGS 					+= -Wlogical-op
+CFLAGS 					+= -Wpointer-arith
+CFLAGS 					+= -Wdisabled-optimization
+CFLAGS                	+= -Wno-unused-parameter
+CFLAGS                  += -Wa,-alh=$(@:.o=.lst)
 
-OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(ASM_SOURCES_X:.S=.o)))
-vpath %.S $(sort $(dir $(ASM_SOURCES_X)))
+# C++ Compiler -- Required & Optimization Flags
+CXXFLAGS                += $(CFLAGS)
+CXXFLAGS 				+= -fabi-version=0
+CXXFLAGS                += -fno-rtti
+CXXFLAGS                += -fno-exceptions
+CXXFLAGS				+= -fno-use-cxa-atexit
+CXXFLAGS 				+= -fno-threadsafe-statics
+
+# C++ -- Warnings
+CXXFLAGS 				+= -Weffc++
+CXXFLAGS 				+= -Wfloat-equal
+CXXFLAGS 				+= -Wsign-promo
+CXXFLAGS 				+= -Wzero-as-null-pointer-constant
+CXXFLAGS 				+= -Wmissing-declarations 
+CXXFLAGS 				+= -Woverloaded-virtual
+CXXFLAGS 				+= -Wsuggest-final-types
+CXXFLAGS 				+= -Wsuggest-final-methods
+CXXFLAGS 				+= -Wsuggest-override
+CXXFLAGS 				+= -Wsuggest-attribute=pure
+CXXFLAGS 				+= -Wsuggest-attribute=const
+CXXFLAGS 				+= -Wsuggest-attribute=noreturn
+CXXFLAGS 				+= -Wsuggest-attribute=format
+CXXFLAGS 				+= -Wmissing-format-attribute
+CXXFLAGS 				+= -Wold-style-cast
+CXXFLAGS 				+= -Wshadow
+CXXFLAGS 				+= -Wuseless-cast
+CXXFLAGS 				+= -Wctor-dtor-privacy
+CXXFLAGS 				+= -Wstrict-null-sentinel
+
+# Linker
+LDFLAGS 				+= $(TOOLCHAIN_SETTINGS) $(DEFS) -Xlinker --gc-sections --specs=nano.specs -lm
+
+# -------------------------------------------------------------
+# Build Type Modifiers
+# -------------------------------------------------------------
+# Debug
+DEFS_DEBUG 				+= -DDEBUG
+CFLAGS_DEBUG            += -ggdb -g3 -Og
+LDFLAGS_DEBUG			+= --specs=rdimon.specs -Og 
+
+# Release
+CFLAGS_RELEASE			+= -Os
+LDFLAGS_RELEASE 		+= --specs=nosys.specs
+
+#########################################################################################################################################
+# RULE DEFINITIONS -- This section is generic
+#########################################################################################################################################
+
+# =======================================================================================================================================
+# Build Configuration Rule 
+# - Generate build config using Product Root Directory ($1), Build Type ("Debug" or "Release") ($2)
+# =======================================================================================================================================
+define CONFIG_RULE
+BUILD_DIR 				:= build/$2
+OBJ_DIR 				:= $$(BUILD_DIR)/obj
+INC_DIRS 				:= cmsis/core cmsis/device Core cpu src inc common
+SRC_DIRS 				:= cmsis/core cmsis/device Core cpu src inc common
+HEADERS 				:= $$(foreach dir, $$(SRC_DIRS), $$(shell find $$(dir) -name "*.h"))
+ASM_SRC 				:= $$(foreach dir, $$(SRC_DIRS), $$(shell find $$(dir) -name "*.s"))
+C_SRC					:= $$(foreach dir, $$(SRC_DIRS), $$(shell find $$(dir) -name "*.c" -not -name "src/main.c"))
+CXX_SRC					:= $$(foreach dir, $$(SRC_DIRS), $$(shell find $$(dir) -name "*.cpp"))
+OBJECTS                 := $$(addprefix $$(OBJ_DIR)/, $$(C_SRC:.c=.o) $$(CXX_SRC:.cpp=.o) $$(ASM_SRC:.s=.o))
+LDSCRIPTS				:= $$(addprefix -T, $$(foreach dir, $$(SRC_DIRS), $$(shell find $$(dir) -name "*.ld")))
+DIRS 					:= $$(BUILD_DIR) $$(sort $$(dir $$(OBJECTS)))
+AUTODEPS 				:= $$(OBJECTS:.o=.d)
 
 
-# SRC_FILES = $(wildcard $(SOURCE_DIR)*.c) $(wildcard $(SOURCE_DIR)*/*.c)
-# ASM_FILES = $(wildcard $(CPU_DIR)*.s) $(wildcard $(CPU_DIR)*/*.s)
-# CORE_FILES = $(wildcard $(CORE_DIR)*.c) $(wildcard $(CORE_DIR)*/*.c)
-###################################################
-
-CSTANDARD = -std=c11
-
-# External libraries
-# LIBRARIES = lib
-
-CMSIS = $(CMSIS_DIR)/device
-CORE = $(CMSIS_DIR)/core
-###################################################
-
-# Location of linker script and startup file
-LINKER_SCRIPT = $(CPU_DIR)/stm32g031x8.ld
-STARTUP_SCRIPT = $(CPU_DIR)/startup_stm32g031xx.s
-###################################################
-
-# vpath %.a ./cpu
-VPATH +=$(SOURCE_DIR) $(CPU_DIR) $(CORE_DIR) $(COMMON_DIR)
-
-CC=arm-none-eabi-gcc
-GDB=arm-none-eabi-gdb
-OBJCOPY=arm-none-eabi-objcopy
-OBJDUMP=arm-none-eabi-objdump
-SIZE=arm-none-eabi-size
-
-# CPU = cortex-m0plus
-
-# mcu
-# MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI)
-ARCH_FLAGS = -mthumb -mcpu=cortex-m0plus
-OOCD_INTERFACE = stlink
-OOCD_TARGET = stm32g0x
-# 
-BUILD_DIR ?= bin
-OPT ?= -Os
-CSTD ?= -std=c11
-# 
-TGT_CPPFLAGS += -MD
-TGT_CPPFLAGS += -Wall -Wundef $(INCLUDES)
-TGT_CPPFLAGS += $(INCLUDES) $(OPENCM3_DEFS)
-
-TGT_CFLAGS += $(OPT) $(CSTD) -ggdb3
-TGT_CFLAGS += $(ARCH_FLAGS)
-TGT_CFLAGS += -fno-common
-TGT_CFLAGS += -ffunction-sections -fdata-sections
-TGT_CFLAGS += -Wextra -Wshadow -Wno-unused-variable -Wimplicit-function-declaration
-TGT_CFLAGS += -Wredundant-decls -Wstrict-prototypes -Wmissing-prototypes
-
-TGT_CXXFLAGS += $(OPT) $(CXXSTD) -ggdb3
-TGT_CXXFLAGS += $(ARCH_FLAGS)
-TGT_CXXFLAGS += -fno-common
-TGT_CXXFLAGS += -ffunction-sections -fdata-sections
-TGT_CXXFLAGS += -Wextra -Wshadow -Wredundant-decls  -Weffc++ -nostartfiles
-
-TGT_LDFLAGS += $(ARCH_FLAGS)
-TGT_LDFLAGS += -specs=nano.specs
-TGT_LDFLAGS += -Wl,--gc-sections
-# OPTIONAL
-#TGT_LDFLAGS += -Wl,-Map=$(PROJECT).map
-ifeq ($(V),99)
-TGT_LDFLAGS += -Wl,--print-gc-sections
+ifeq ($2, Release)
+	DEFS 	+= $$(DEFS_RELEASE)
+	CFLAGS 	+= $$(CFLAGS_RELEASE)
+	LDFLAGS += $$(LDFLAGS_RELEASE)
+else 
+	DEFS 	+= $$(DEFS_DEBUG)
+	CFLAGS 	+= $$(CFLAGS_DEBUG)
+	LDFLAGS += $$(LDFLAGS_DEBUG)
 endif
 
-# Linker script generator fills this in for us.
-ifeq (,$(DEVICE))
-# LDLIBS += -l$(OPENCM3_LIB)
+endef 
+# =======================================================================================================================================
+# End CONFIG_RULE
+# =======================================================================================================================================
+
+
+# =======================================================================================================================================
+# Build Target Rule 
+# - Generate build config using Product Name ($1), Product Root Directory ($2), Build Type ("Debug" or "Release") ($3)
+# =======================================================================================================================================
+define BUILD_TARGET_RULE
+$(eval $(call CONFIG_RULE,$2,$3))
+
+all : $$(BUILD_DIR)/$1.elf $$(BUILD_DIR)/$1.hex
+
+# Tool Invocations
+$$(BUILD_DIR)/$1.elf : $$(OBJECTS) | $$(BUILD_DIR)
+	@echo ' '
+	@echo 'Building $$(@)'
+	@echo 'Invoking: Cross ARM C++ Linker'
+	$$(CXX) \
+		-Xlinker -Map=$$(patsubst %.elf,%.map,$$(@)) \
+		$$(LDFLAGS) \
+		$$(LDSCRIPTS) \
+		-o $$(@) $$(OBJECTS)
+	@echo 'Finished building: $$@'
+	@echo ' '
+	@echo $$(build)
+
+%.hex : %.elf
+	@echo 'Invoking: Cross ARM GNU Create Flash Image'
+	$$(OBJCOPY) -O ihex $$< $$(@) 
+	$$(OBJCOPY) -O binary $(BUILD_DIR)/$(PROJECT).elf $(BUILD_DIR)/$(PROJECT).bin
+	$$(OBJDUMP) -St $(BUILD_DIR)/$(PROJECT).elf >$(BUILD_DIR)/$(PROJECT).lst
+	@echo 'Finished building: $$@'
+	@echo ' '
+	@echo 'Invoking: Cross ARM GNU Print Size'
+	$$(SIZE) --format=berkeley $$<
+	@echo 'Finished building: $$@'
+	@echo ' '
+
+$$(OBJECTS) : | $$(DIRS)
+
+$$(DIRS) : 
+	@echo Creating $$(@)
+	@mkdir -p $$(@)
+
+$$(OBJ_DIR)/%.o : %.c
+	@echo Compiling $$(<F)
+	@$$(CC) $$(C_STANDARD) $$(CFLAGS) -c -MMD -MP $$< -o $$(@)
+
+$$(OBJ_DIR)/%.o : %.cpp
+	@echo Compiling $$(<F)
+	@$$(CXX) $$(CXX_STANDARD) $$(CXXFLAGS) -c -MMD -MP $$< -o $$(@)
+
+$$(OBJ_DIR)/%.o : %.s
+	@echo Assembling $$(<F)
+	@$$(AS) $$(ASFLAGS) $$< -o $$(@)
+
+
+
+
+clean :
+	@rm -rf build
+
+.PHONY : clean all
+
+# include by auto dependencies
+-include $$(AUTODEPS)
+
+endef
+# =======================================================================================================================================
+# End BUILD_TARGET_RULE
+# =======================================================================================================================================
+#########################################################################################################################################
+#########################################################################################################################################
+
+# Build Type
+ifeq ($(build), Debug)
+	BUILD_TYPE := Debug
+else
+	BUILD_TYPE := Release
 endif
-# nosys is only in newer gcc-arm-embedded...
-#LDLIBS += -specs=nosys.specs
-LDLIBS += -Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group
-
-# CFLAGS  = -Wall -Wextra -Warray-bounds
-# CFLAGS += -mcpu=cortex-m0plus -mthumb -mlittle-endian -mthumb-interwork
-# CFLAGS += -mfpu=fpv4-sp-d16
-# CFLAGS += -ffunction-sections -fdata-sections
-CFLAGS += $(TGT_CFLAGS)
-
-# CFLAGS  = -Wall -g3 $(CSTANDARD) # -Os $(OPT)
-# CFLAGS += -mlittle-endian -mcpu=cortex-m4 -march=armv7e-m -mthumb
-# CFLAGS += -mfpu=fpv4-sp-d16 -mfloat-abi=hard
-# CFLAGS += -ffunction-sections -fdata-sections
-CFLAGS += -D$(MCU)
-CFLAGS += -DDEBUG
-CFLAGS += -I$(INCLUDE_DIR)
-CFLAGS += -I$(CORE_DIR)
-CFLAGS += -I$(SOURCE_DIR)
-CFLAGS += -I$(CMSIS)
-CFLAGS += -I$(CORE)
-CFLAGS += -I$(COMMON_DIR)
-# CFLAGS += -g -gdwarf-2
 
 
-# LDFLAGS += -Wl,--gc-sections -Wl,-Map=$(BUILD_DIR)/$(PROJECT).map -ffreestanding -Xlinker
-LDFLAGS+=-T$(LINKER_SCRIPT) --specs=rdimon.specs -lc -lrdimon $(LDLIBS) $(TGT_LDFLAGS) --specs=nosys.specs
-# CFLAG   = -mcpu=$(CPU) -mthumb -Wall -fdump-rtl-expand -specs=nano.specs --specs=rdimon.specs   -Wl,--start-group -lgcc -lc -lm -lrdimon -Wl,--end-group
-# LDFLAG  = -mcpu=$(CPU) -T ./stm32_flash.ld -specs=nano.specs --specs=rdimon.specs   -Wl,--start-group -lgcc -lc -lm -lrdimon -Wl,--end-group
+# Defaults
+PRODUCT ?= main
+PRODUCT_DIR ?= project
+BUILD_TYPE ?= Debug
+SRC_DIRS ?= $(PRODUCT_DIR)
 
-###################################################
-
-ROOT=$(shell pwd)
-
-OBJS = $(patsubst $(SOURCE_DIR)/%.c,$(BUILD_DIR)/objs/%.o,$(SRC))
-DEPS = $(addprefix $(BUILD_DIR)/deps/,$(SRC:.c=.d))
-
-###################################################
-
-all: proj
-
--include $(DEPS)
-
-proj: $(BUILD_DIR) $(BUILD_DIR)/$(PROJECT).elf
-
-$(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
-	mkdir -p $(BUILD_DIR)/deps $(BUILD_DIR)/objs
-
-$(BUILD_DIR)/objs/%.o : src/%.c $(BUILD_DIR) $(DEPS)
-	$(CC) $(CFLAGS) -c -o $@ $< -MMD -MF $(BUILD_DIR)/deps/$(*F).d
-
-$(BUILD_DIR)/$(PROJECT).elf: $(SRC)
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@ $(STARTUP_SCRIPT) 
-	$(OBJCOPY) -O ihex $(BUILD_DIR)/$(PROJECT).elf $(BUILD_DIR)/$(PROJECT).hex
-	$(OBJCOPY) -O binary $(BUILD_DIR)/$(PROJECT).elf $(BUILD_DIR)/$(PROJECT).bin
-	$(OBJDUMP) -St $(BUILD_DIR)/$(PROJECT).elf >$(BUILD_DIR)/$(PROJECT).lst
-	$(SIZE) $(BUILD_DIR)/$(PROJECT).elf
-
-$(BUILD_DIR)/%.o: %.c
-	@printf "  CC\t$<\n"
-	@mkdir -p $(dir $@)
-	$(Q)$(CC) $(TGT_CFLAGS) $(CFLAGS) $(TGT_CPPFLAGS) $(CPPFLAGS) -o $@ -c $<
-
-$(BUILD_DIR)/%.o: %.cxx
-	@printf "  CXX\t$<\n"
-	@mkdir -p $(dir $@)
-	$(Q)$(CC) $(TGT_CXXFLAGS) $(CXXFLAGS) $(TGT_CPPFLAGS) $(CPPFLAGS) -o $@ -c $<
-
-program: all
-	@sleep 1
-	st-flash write `pwd`/$(BUILD_DIR)/$(PROJECT).bin 0x08000000
-
-debug: program
-	$(GDB) -x extra/gdb_cmds $(PROJECT).elf
-
-clean:
-	find ./ -name '*~' | xargs rm -f	
-	rm -rf $(BUILD_DIR)
-
-reallyclean: clean
-	$(MAKE) -C clean
-
-.PHONY: all proj program debug flash clean reallyclean
+# Evaluate Rules Defined Above
+$(eval $(call BUILD_TARGET_RULE,$(PRODUCT),$(PRODUCT_DIR),$(BUILD_TYPE)))

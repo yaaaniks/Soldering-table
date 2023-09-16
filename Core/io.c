@@ -16,3 +16,12 @@ int _write(int file, char *ptr, int len) {
     }
     return len;
 }
+
+void GPIO_Init(void) {
+	GPIOA->MODER &= ~(GPIO_MODER_MODE2 | GPIO_MODER_MODE4);	
+    GPIOA->MODER |= (GPIO_MODER_MODE2_0 | GPIO_MODER_MODE4_0);	
+    GPIOA->OTYPER &= ~(GPIO_OTYPER_OT2 | GPIO_OTYPER_OT4);	
+    GPIOA->OSPEEDR &= ~(GPIO_OSPEEDR_OSPEED2 | GPIO_OSPEEDR_OSPEED4);	
+    GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPD2 | GPIO_PUPDR_PUPD4);	
+    GPIOA->BSRR |= (GPIO_BSRR_BS2 | GPIO_BSRR_BR4);	
+}
