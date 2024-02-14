@@ -65,10 +65,10 @@ typedef struct {
 	void (*stateHandler[ST_NUM])();
 } Fsm;
 
-extern size_t numCells;
-extern Fsm_Cell_t fsmTable[];
-extern void (*stateHandler[])();
-extern Fsm fsm;
+// extern size_t numCells;
+// extern Fsm_Cell_t fsmTable[];
+// extern void (*stateHandler[])();
+// extern Fsm fsm;
 
 /**
  * @brief push next event in top of pool to move to the next state

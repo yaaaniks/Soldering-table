@@ -1,5 +1,4 @@
 #include "fsm.h"
-#include "io.h"
 #include "constants.h"
 Fsm fsm;
 

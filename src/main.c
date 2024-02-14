@@ -9,16 +9,6 @@
 #include "constants.h"
 #include "exti.h"
 #include "bitmap.h"
-#include "io.h"
-
-Fsm_Cell_t fsmTable[] = {
-	{ST_UPDATESCREEN, ST_STARTUP, EV_ADC},
-	{ST_UPDATESCREEN, ST_UPDATESCREEN, EV_ADC},
-	{ST_REGULATOR, ST_UPDATESCREEN, EV_USER},
-	{ST_REGULATOR, ST_REGULATOR, EV_ADC},
-	{ST_UPDATESCREEN, ST_REGULATOR, EV_USER},
-	{ST_UPDATESCREEN, ST_UPDATESCREEN, EV_NONE}
-};
 
 void beginScreen() {
 	ssd1306_DrawRectangle(1, 1, 127, 63, White);
@@ -36,7 +26,6 @@ void beginScreen() {
     ssd1306_SetCursor(100, 30);
     ssd1306_WriteChar('C', Font_6x8, White);
 	ssd1306_UpdateScreen();
-	// ssd1306_timeUpdate()
 }
 
 void drawWallPaper() {
@@ -48,29 +37,10 @@ void drawWallPaper() {
 	}
 }
 
-void wait(void) {
-	__NOP();
-}
-
-void (*stateHandler[])() = {
-	[ST_STARTUP] = updateScreen,
-	[ST_USER] = updateScreen,
-	[ST_UPDATESCREEN] = updateScreen,
-	[ST_NONE] = drawWallPaper
-};
-
-        // delay_ms(500);
-        // GPIOA->BSRR = GPIO_BSRR_BS2;		/* atomic set PA3 */
-        // delay_ms(500);
-        // GPIOA->BSRR = GPIO_BSRR_BR2;		/* atomic clr PA3 */
-
-size_t numCells = sizeof(fsmTable) / sizeof(fsmTable[0]);
-
 int main(void) {
 	__enable_irq();
     SystemClockInit_64MHz();     
     SysTick_Init();
-    I2C2_Config();
 	ssd1306_Init();
 	beginScreen();
 	TIM3_Init();
@@ -79,23 +49,13 @@ int main(void) {
 	ADC1_Start();
     
 	EXTI_Init();
-	GPIO_Init();
 	
 	// TIM1_Init();
 	Event_t ev;
 	__NOP();
 	__NOP();
-
-	fsmInit(&fsm, &fsmTable, numCells, &stateHandler, ST_NUM);		
-    for(;;) {
-		ev = fifoPull(&fsm);
-		fsmDispatch(&fsm, ev);
-		TIM2->CCR2 = PWM_Fill;
-    	// // delay_ms(500);                                                      
-    	if(PWM_Fill == 90)                                                
-      		PWM_Fill = 10;                                                  
-    	else
-      		PWM_Fill += 10;                                                 
+		
+    for(;;) {                                             
     }
 	return 0;
 }

@@ -165,7 +165,6 @@ void updateTemp(volatile uint16_t *adcData) {
 	// /* calc. temperature */
 	// Ntc_Tmp = (1.0/(A + B*Ntc_Ln + C*Ntc_Ln*Ntc_Ln*Ntc_Ln)) - 273.15;
     // currentTemperature = Ntc_Tmp;
-    fifoPush(&fsm, EV_ADC);
 }
 
 void updateScreen(void) {
