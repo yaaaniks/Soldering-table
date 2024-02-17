@@ -1,7 +1,7 @@
 #ifndef EXTI_H
 #define EXTI_H
 
-#include "stm32g031xx.h"
+#include "stm32g0xx.h"
 #include "constants.h"
 #include "fsm.h"
 

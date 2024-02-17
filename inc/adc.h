@@ -1,7 +1,7 @@
 #ifndef ADC_H
 #define ADC_H
 
-#include "stm32g031xx.h"
+#include "stm32g0xx.h"
 #include "tempControl.h"
 #include "fsm.h"
 
@@ -11,8 +11,7 @@
 #define ADC_SRC_CNT 64
 
 extern volatile uint16_t ADCRawValues[ADC_SRC_CNT];
-void ADC1_Init(void);
-void ADC1_Start(void);
+void adcInit(void);
 void __attribute__((interrupt, used)) ADC1_IRQHandler(void);
 void __attribute__((interrupt, used)) DMA1_Channel1_IRQHandler();   // FIXME: handler is not called
 #endif // ADC_H

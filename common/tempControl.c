@@ -1,6 +1,5 @@
 #include "tempControl.h"
 #include "constants.h"
-#include "filter_sma.h"
 
 #define NTC_UP_R 100000.0f
 /* constants of Steinhart-Hart equation */
@@ -155,6 +154,7 @@ uint16_t calcTemperature(uint16_t adcsum)
 
 void updateTemp(volatile uint16_t *adcData) { 
     uint16_t adcSum;
+    // TODO add correct SMA filter
     for (uint8_t i = 0; i < WINDOW_SIZE; i++) {
         adcSum = slidingAverage((const uint16_t*)adcData, 64, i);
     }

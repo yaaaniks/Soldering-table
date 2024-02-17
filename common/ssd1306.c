@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>  // For memcpy
-#include "stm32g031xx.h"
+#include "stm32g0xx.h"
 #include "timer.h"
 #include "i2c.h"
 
@@ -16,12 +16,12 @@ void ssd1306_Reset(void) {
 
 // Send a byte to the command register
 void ssd1306_WriteCommand(uint8_t byte) {
-    I2C2_MemWrite(SSD1306_I2C_ADDR, SSD1306_COMMAND_MODE, &byte, 1, 10);
+    i2cTransmit(SSD1306_I2C_ADDR, SSD1306_COMMAND_MODE, &byte, 1);
 }
 
 // Send data
 void ssd1306_WriteData(uint8_t* buffer, uint32_t buff_size) {
-    I2C2_MemWrite(SSD1306_I2C_ADDR, SSD1306_DATA_MODE, buffer, buff_size, 10);
+    i2cTransmit(SSD1306_I2C_ADDR, SSD1306_DATA_MODE, buffer, buff_size);
 }
 // Screenbuffer
 static uint8_t SSD1306_Buffer[SSD1306_BUFFER_SIZE];
