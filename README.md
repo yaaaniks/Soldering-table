@@ -6,11 +6,11 @@ It is written in *CMSIS* and includes written libraries for configuring and cont
 ## Structure of project
 ```mermaid
 flowchart LR
-A[cmsis] --> B(device) -->|stm32g031xx.h| E[src]
-A[cmsis] --> C(core) --> E[src]
-F[Core] -->|exti.h, i2c.h...| E[src]
-G[cpu] -->|startup, ld| E[src]
-E[src] -->  D{Decision}
+A[core] --> B(device) -->|stm32g0xx.h| H[src, inc]
+A[core] --> C(arm) -->|core_cm0plus.h| H[src, inc]
+A[core] --> E(sys) -->|linker.ld, startup.s..| H[src, inc] 
+F[common] --> |menu.h, tempControl.h...| H[src, inc]
+H[src, inc] -->|i2c.c, timer.c, i2c.h, timer.h...| D{Decision}
 ```
 - Workspace is organized as in the picture. The main loop of the program is executed in **main.c** in the */src/* directory
 	> **Note:** But in future it will be RTOS management...
@@ -29,7 +29,7 @@ In addition, the **DMA** and **EXTI** principles are implemented in the project,
 
 To build the program you need execute the make command in the terminal from the main working directory:
 ```bash
-$ make
+$ make build=Release
 ```
 The result is 3 main formats of executable programs - **.hex**, **.bin** and **.elf**.
 
@@ -38,11 +38,11 @@ To flash the microcontroller, you need the *stlink* software. To install it use 
 ```bash
 $ sudo apt-get -y install stlink-tools
 ```
-After it go to the build directory and run this command:
+After it from main directory run this command:
 ```bash
-$ st-flash write DIYtable.bin 0x08000000
+$ st-flash write build/Release/table.bin 0x08000000
 ```
 or 
 ```bash
-$ st-flash --format ihex write DIYtable.hex
+$ st-flash --format ihex write build/Release/table.hex
 ```
