@@ -4,6 +4,7 @@
 #include <stddef.h> 
 
 #include "stm32g0xx.h"
+#include "timer.h"
 
 void i2cInit(void);
 void i2cTransmit(const uint8_t devAddr, const uint8_t memAddr, const uint8_t* data, size_t size);

@@ -1,6 +1,6 @@
 #include "rcc.h"
 
-void SystemClockInit_64MHz(void) {
+void systemClockInit_64MHz(void) {
 	RCC->CR |= RCC_CR_HSION;			
 	while(!(RCC->CR & RCC_CR_HSIRDY));	
 

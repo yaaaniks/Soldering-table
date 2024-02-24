@@ -51,13 +51,26 @@ void i2cTransmit(const uint8_t devAddr, const uint8_t memAddr, const uint8_t* da
 	__DMB();
 	I2C2->CR2 |= I2C_CR2_START; 				
 
-	while(!(I2C2->ISR & (I2C_ISR_TXE))) {}
+	uint32_t timestamp = getTimestamp();
+	while(!(I2C2->ISR & (I2C_ISR_TXE))) {
+		if (getTimestamp() - timestamp > 1000) {
+			return;
+		}
+	}
 
     I2C2->TXDR = (uint32_t)memAddr;
-	while(!(I2C2->ISR & (I2C_ISR_TXE))) {}					
+	while(!(I2C2->ISR & (I2C_ISR_TXE))) {
+		if (getTimestamp() - timestamp > 1000) {
+			return;
+		}
+	}					
  
 	for (size_t index = 0; index < size; index++) {
 		I2C2->TXDR = (uint32_t)*(data++);
-        while(!(I2C2->ISR & I2C_ISR_TXE)) {}
+        while(!(I2C2->ISR & I2C_ISR_TXE)) {
+			if (getTimestamp() - timestamp > 1000) {
+				return;
+			}
+		}
     } 
 }

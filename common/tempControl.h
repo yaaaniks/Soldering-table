@@ -9,7 +9,6 @@
 #include "ssd1306.h"
 #include "ssd1306_fonts.h"
 #include "constants.h"
-#include "fsm.h"
 #include "timer.h"
 
 #define TEMPERATURE_UNDER 0
@@ -20,8 +19,5 @@
 
 void updateTemp(volatile uint16_t *adcData);
 void updateScreen(void);
-
-typedef uint16_t temperature_table_entry_type;
-typedef uint16_t temperature_table_index_type;
 
 #endif // TEMP_CONTROL_H

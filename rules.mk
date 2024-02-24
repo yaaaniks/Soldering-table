@@ -61,7 +61,7 @@ CXXFLAGS 				+= -Wctor-dtor-privacy
 CXXFLAGS 				+= -Wstrict-null-sentinel
 
 # Linker
-LDFLAGS 				+= $(TOOLCHAIN_SETTINGS) $(DEFS) -Xlinker --gc-sections --specs=nano.specs -lm #-nostart-files
+LDFLAGS 				+= $(TOOLCHAIN_SETTINGS) $(DEFS) -Xlinker --gc-sections --specs=nano.specs -lm -u_printf_float#-nostart-files
 
 # Assembler 
 ASFLAGS = -g 

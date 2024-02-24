@@ -3,7 +3,7 @@
 
 #include "stm32g0xx.h"
 
-void SystemClockInit_64MHz(void);
+void systemClockInit_64MHz(void);
 void RCC_DeInit(void);
 
 #endif // RCC_H

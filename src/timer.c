@@ -2,9 +2,9 @@
 #include "tempControl.h"
 #include "constants.h"
 
-#define TIM3_FREQ   1000U
+#define TIM3_FREQ   20000U
+
 volatile uint32_t timeStamp, delay;
-uint8_t PWM_Fill = 20;
 
 void TIM1_Init(void) {
     RCC->APBENR2 |= RCC_APBENR2_TIM1EN;
@@ -48,7 +48,6 @@ void TIM3_Init(void) {
     
     TIM3->SR = 0;
 
-    TIM3->CR1 |= TIM_CR1_CEN;
     TIM3->EGR |= TIM_EGR_UG;
 }
 
@@ -62,5 +61,7 @@ uint32_t getTimestamp(void) { return timeStamp; }
 
 void delay_ms(uint32_t ms) {
     delay = timeStamp + ms;
-    while(delay != timeStamp);
+    while(delay != timeStamp) {
+        __NOP();
+    }
 }
